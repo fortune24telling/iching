@@ -129,6 +129,11 @@
     display:block; text-align:center; font-size:13.5px; font-family:'Shippori Mincho',serif; padding:13px;
     background:var(--gold); color:var(--ink); font-weight:600; text-decoration:none;
   }
+  .upsell-card.premium{
+    border-color:var(--gold); box-shadow:0 0 0 1px var(--gold); background:rgba(201,168,106,0.06);
+  }
+  .upsell-card.premium .ribbon{ background:var(--gold); color:var(--ink); }
+  .upsell-card.premium a{ background:transparent; border:1px solid var(--gold); color:var(--gold-soft); font-weight:400; }
 
   .retry-link{ display:block; text-align:center; margin-top:4px; font-size:12px; color:rgba(239,232,216,0.4); text-decoration:underline; }
   .error-text{ font-size:12px; color:var(--vermilion); margin-top:10px; }
@@ -214,6 +219,14 @@
       <p>今、本当に気になっていること――仕事、恋愛、お金、健康など――を自分の言葉で問い、変爻まで含めた詳しい解釈を受け取れます。</p>
       <span class="price">¥500 / 1回</span>
       <a href="paid.html">¥500鑑定をはじめる</a>
+    </div>
+
+    <div class="upsell-card premium">
+      <span class="ribbon">個別鑑定</span>
+      <h4 class="mincho">鑑定士に相談する</h4>
+      <p>事前にお悩みをお伺いし、鑑定士がコイン三枚法で立てた卦を、あなたの状況に当てはめて手作業で読み解きます。</p>
+      <span class="price">¥20,000</span>
+      <a href="#">個別鑑定を申し込む</a>
     </div>
 
     <a class="retry-link" id="retryLink" href="#">明日また占う</a>

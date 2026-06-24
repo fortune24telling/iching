@@ -54,6 +54,8 @@
   }
   .menu-badge.free{ color:var(--jade); border:1px solid var(--jade); }
   .menu-badge.paid{ color:var(--vermilion); border:1px solid var(--vermilion); }
+  .menu-badge.premium{ color:var(--gold); border:1px solid var(--gold); }
+  .menu-card.premium{ background:linear-gradient(160deg, rgba(201,168,106,0.08), transparent 60%); }
   .menu-card h2{ font-family:'Shippori Mincho',serif; font-size:17px; margin-bottom:8px; display:flex; align-items:baseline; gap:10px; }
   .menu-card h2 .price{ font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--gold-soft); font-weight:500; }
   .menu-card p{ font-size:12.5px; color:rgba(239,232,216,0.65); line-height:1.8; margin-bottom:14px; }
@@ -91,7 +93,14 @@
     <div class="cta">¥500鑑定をはじめる <span class="arrow">→</span></div>
   </a>
 
-  <p class="note">¥500鑑定はお試し公開中のため、現在お支払い手続きは発生しません。<br>本格的な個別鑑定（¥20,000）は、近日公開予定です。</p>
+  <a class="menu-card premium" href="#">
+    <span class="menu-badge premium">個別鑑定</span>
+    <h2>鑑定士に相談する <span class="price">¥20,000</span></h2>
+    <p>事前にお悩みをお伺いし、鑑定士がコイン三枚法で立てた卦を、あなたの状況に当てはめて手作業で読み解きます。</p>
+    <div class="cta">個別鑑定を申し込む <span class="arrow">→</span></div>
+  </a>
+
+  <p class="note">¥500鑑定・¥20,000個別鑑定はお試し公開中のため、現在お支払い手続きは発生しません。</p>
 </div>
 
 </body>
