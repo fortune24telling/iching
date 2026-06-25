@@ -298,7 +298,7 @@
   }
 
   function requestDiagnosis(year, month, day){
-    return fetch('/api/bazi-free', {
+    return fetch('/api/iching/bazi-free', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ year: year, month: month, day: day })
