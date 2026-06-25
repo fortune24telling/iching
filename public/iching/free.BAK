@@ -295,7 +295,7 @@
   }
 
   function requestDivination(){
-    return fetch('/api/iching/divine', {
+    return fetch('/api/divine', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: 'free' })

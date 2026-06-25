@@ -366,7 +366,7 @@
 
   // ---- サーバーに「占って」とリクエストし、結果を受け取る ----
   function requestDivination(mode, category){
-    return fetch('/api/iching/divine', {
+    return fetch('/api/divine', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: mode, category: category })
