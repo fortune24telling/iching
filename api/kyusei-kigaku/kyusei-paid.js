@@ -1,12 +1,19 @@
 // api/kyusei-kigaku/kyusei-paid.js
 // 九星気学・¥500鑑定のエンドポイント。
 // 入力：生年月日
-// 出力：本命星＋性格・才能の詳しい解釈＋今年の運気（年盤の中心星との五行関係）
+// 出力：本命星＋性格・才能の詳しい解釈＋今年・今月・今日の運気＋処出方位
 //
 // このファイルはサーバー側でのみ実行され、ブラウザには送られない。
 
 const { getHonmeisei, getHonmeiseiNumber, KYUSEI_NAMES, KYUSEI_GOGYO } = require('./honmeisei.js');
-const { getYearFortune } = require('../shichu-suimei/gogyo-relation.js');
+const { getYearFortune, getFortuneByPeriod } = require('../shichu-suimei/gogyo-relation.js');
+const { getCurrentGetsuban } = require('./getsuban.js');
+const { getCurrentNichiban } = require('./nichiban.js');
+const { getYearPillar, getMonthPillar, getDayPillar } = require('../shichu-suimei/bazi.js');
+const {
+  getBanHaichi, getGoOusatsuHoui, getAnkensatsuHoui,
+  getHonmeisatsuHoui, getHonmeitekisatsuHoui, getHaHoui
+} = require('./houi.js');
 
 // 9つの本命星ごとの、性格・才能・適職の詳しい解釈（¥500鑑定用）
 const HONMEISEI_PERSONALITY = {
@@ -57,6 +64,19 @@ const HONMEISEI_PERSONALITY = {
   }
 };
 
+// 指定した中宮の星(centerNumber)・本命星(honmeiseiNumber)から、
+// 五黄殺・暗剣殺・本命殺・本命的殺の4方位をまとめて求める
+function getKyouHoui(centerNumber, honmeiseiNumber, junishi) {
+  const haichi = getBanHaichi(centerNumber);
+  return {
+    goousatsu: getGoOusatsuHoui(haichi),
+    ankensatsu: getAnkensatsuHoui(haichi),
+    honmeisatsu: getHonmeisatsuHoui(haichi, honmeiseiNumber),
+    honmeitekisatsu: getHonmeitekisatsuHoui(haichi, honmeiseiNumber),
+    ha: junishi ? getHaHoui(junishi) : null
+  };
+}
+
 module.exports = (req, res) => {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method Not Allowed" });
@@ -81,13 +101,30 @@ module.exports = (req, res) => {
   try {
     const honmeisei = getHonmeisei(y, m, d);
     const personality = HONMEISEI_PERSONALITY[honmeisei.number];
+    const selfGogyo = honmeisei.gogyo;
 
-    // 今年の運気：今年の年盤中心星を求め、本命星との五行関係を見る
-    const thisYear = new Date().getFullYear();
+    // ===== 今年の運気＋処出方位 =====
+    const now = new Date();
+    const thisYear = now.getFullYear();
     const thisYearCenterNumber = getHonmeiseiNumber(thisYear);
     const thisYearGogyo = KYUSEI_GOGYO[thisYearCenterNumber];
-    const selfGogyo = honmeisei.gogyo;
-    const yearFortune = getYearFortune(selfGogyo, thisYearGogyo);
+    const yearFortune = getFortuneByPeriod(selfGogyo, thisYearGogyo, "year");
+    const yearPillar = getYearPillar(thisYear, now.getMonth() + 1, now.getDate(), 12, 0);
+    const yearHoui = getKyouHoui(thisYearCenterNumber, honmeisei.number, yearPillar.shi);
+
+    // ===== 今月の運気＋処出方位 =====
+    const getsuban = getCurrentGetsuban();
+    const monthGogyo = getsuban.gogyo;
+    const monthFortune = getFortuneByPeriod(selfGogyo, monthGogyo, "month");
+    const monthPillar = getMonthPillar(thisYear, now.getMonth() + 1, now.getDate(), 12, 0, yearPillar);
+    const monthHoui = getKyouHoui(getsuban.number, honmeisei.number, monthPillar.shi);
+
+    // ===== 今日の運気＋処出方位 =====
+    const nichiban = getCurrentNichiban();
+    const dayGogyo = nichiban.gogyo;
+    const dayFortune = getFortuneByPeriod(selfGogyo, dayGogyo, "day");
+    const dayPillar = getDayPillar(thisYear, now.getMonth() + 1, now.getDate(), 12, 0);
+    const dayHoui = getKyouHoui(nichiban.number, honmeisei.number, dayPillar.shi);
 
     res.status(200).json({
       honmeisei: {
@@ -105,7 +142,25 @@ module.exports = (req, res) => {
         yearCenterName: KYUSEI_NAMES[thisYearCenterNumber],
         relation: yearFortune.relation,
         label: yearFortune.label,
-        text: yearFortune.text
+        text: yearFortune.text,
+        houi: yearHoui
+      },
+      monthFortune: {
+        monthCenterName: getsuban.name,
+        termName: getsuban.termName,
+        relation: monthFortune.relation,
+        label: monthFortune.label,
+        text: monthFortune.text,
+        houi: monthHoui
+      },
+      dayFortune: {
+        dayCenterName: nichiban.name,
+        mode: nichiban.mode,
+        kanshi: nichiban.kanshi,
+        relation: dayFortune.relation,
+        label: dayFortune.label,
+        text: dayFortune.text,
+        houi: dayHoui
       }
     });
   } catch (e) {

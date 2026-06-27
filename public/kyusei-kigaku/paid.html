@@ -98,7 +98,29 @@
   .fortune-card .fortune-head .year-tag{ font-family:'Cormorant Garamond',serif; font-size:13px; color:var(--gold); }
   .fortune-card .fortune-head .fortune-label{ font-family:'Shippori Mincho',serif; font-size:15px; color:var(--gold-soft); }
   .fortune-card .year-center{ font-size:11.5px; color:rgba(239,232,216,0.5); margin-bottom:10px; }
-  .fortune-card p{ font-size:12.5px; color:rgba(239,232,216,0.75); line-height:1.8; }
+  .fortune-card p{ font-size:12.5px; color:rgba(239,232,216,0.75); line-height:1.8; margin-bottom:14px; }
+
+  .period-tabs{ display:flex; gap:8px; margin-bottom:14px; }
+  .period-tab{
+    flex:1; padding:9px 6px; font-size:12.5px; font-family:'Shippori Mincho', serif;
+    color:rgba(239,232,216,0.5); background:transparent; border:1px solid var(--line);
+    border-radius:2px; cursor:pointer; transition:all .2s ease;
+  }
+  .period-tab.active{ color:var(--ink); background:var(--gold); border-color:var(--gold); font-weight:600; }
+
+  .houi-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px;
+  }
+  .houi-item{
+    border:1px solid var(--line); padding:9px 10px; font-size:11.5px;
+    color:rgba(239,232,216,0.6); background:rgba(239,232,216,0.02);
+  }
+  .houi-item.kyou{ border-color:var(--vermilion); }
+  .houi-item .houi-name{ color:var(--gold); font-size:10.5px; margin-bottom:3px; display:block; }
+  .houi-item .houi-value{ font-family:'Shippori Mincho',serif; font-size:13px; }
+  .houi-item.kyou .houi-value{ color:var(--vermilion); }
+  .houi-item .houi-value.none{ color:rgba(239,232,216,0.3); font-family:'Zen Kaku Gothic New', sans-serif; font-size:11.5px; }
+  .houi-note{ font-size:10.5px; color:rgba(239,232,216,0.35); margin-top:10px; line-height:1.7; }
 
   .upsell-card{
     border:1px solid var(--gold); box-shadow:0 0 0 1px var(--gold);
@@ -197,7 +219,13 @@
       <p id="jobText"></p>
     </div>
 
-    <div class="section-divider"><span class="line"></span><span class="label">今年の運気</span><span class="line"></span></div>
+    <div class="section-divider"><span class="line"></span><span class="label">運気と方位</span><span class="line"></span></div>
+
+    <div class="period-tabs">
+      <button type="button" class="period-tab active" data-period="year">今年</button>
+      <button type="button" class="period-tab" data-period="month">今月</button>
+      <button type="button" class="period-tab" data-period="day">今日</button>
+    </div>
 
     <div class="fortune-card">
       <div class="fortune-head">
@@ -206,6 +234,9 @@
       </div>
       <p class="year-center" id="fortuneCenter"></p>
       <p id="fortuneText"></p>
+
+      <div class="houi-grid" id="houiGrid"></div>
+      <p class="houi-note">五黄殺・暗剣殺・歳破(月破・日破)は誰にとっても注意したい方位、本命殺・本命的殺はあなたの本命星に基づく方位です。「高島易断」系の暦に準拠した計算方式によるもので、流派によって結果が異なる場合があります。</p>
     </div>
 
     <div class="upsell-card">
@@ -339,7 +370,65 @@
     if(statusTimer) clearInterval(statusTimer);
   }
 
+  var currentResultData = null;
+  var currentPeriod = 'year';
+  var periodTabs = Array.prototype.slice.call(document.querySelectorAll('.period-tab'));
+  var houiGrid = document.getElementById('houiGrid');
+
+  function houiItemHtml(label, value, isKyou){
+    var displayValue = value ? value : 'なし';
+    var valueClass = value ? 'houi-value' : 'houi-value none';
+    return '<div class="houi-item' + (isKyou && value ? ' kyou' : '') + '">' +
+      '<span class="houi-name">' + label + '</span>' +
+      '<span class="' + valueClass + '">' + displayValue + '</span>' +
+    '</div>';
+  }
+
+  function renderPeriod(period){
+    if(!currentResultData) return;
+    var data = currentResultData;
+    var fortune, centerLabel, periodTag;
+
+    if(period === 'year'){
+      fortune = data.yearFortune;
+      centerLabel = '今年の年盤の中心：' + fortune.yearCenterName;
+      periodTag = fortune.year + '年';
+    } else if(period === 'month'){
+      fortune = data.monthFortune;
+      centerLabel = '今月の月盤の中心：' + fortune.monthCenterName + '（' + fortune.termName + '〜）';
+      periodTag = '今月';
+    } else {
+      fortune = data.dayFortune;
+      centerLabel = '今日の日盤の中心：' + fortune.dayCenterName + '（' + fortune.mode + '・' + fortune.kanshi + '）';
+      periodTag = '今日';
+    }
+
+    fortuneYear.textContent = periodTag;
+    fortuneLabel.textContent = fortune.label;
+    fortuneCenter.textContent = centerLabel;
+    fortuneText.textContent = fortune.text;
+
+    var h = fortune.houi;
+    houiGrid.innerHTML =
+      houiItemHtml('五黄殺', h.goousatsu, true) +
+      houiItemHtml('暗剣殺', h.ankensatsu, true) +
+      houiItemHtml('本命殺', h.honmeisatsu, true) +
+      houiItemHtml('本命的殺', h.honmeitekisatsu, true) +
+      houiItemHtml(period === 'year' ? '歳破' : (period === 'month' ? '月破' : '日破'), h.ha, true);
+  }
+
+  periodTabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      periodTabs.forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      currentPeriod = tab.getAttribute('data-period');
+      renderPeriod(currentPeriod);
+    });
+  });
+
   function showResult(data){
+    currentResultData = data;
+
     resultNumber.textContent = data.honmeisei.number;
     resultName.textContent = data.honmeisei.name;
     resultGogyo.textContent = '五行：' + data.honmeisei.gogyo;
@@ -348,10 +437,10 @@
     talentText.textContent = data.personality.talent;
     jobText.textContent = data.personality.job;
 
-    fortuneYear.textContent = data.yearFortune.year + '年';
-    fortuneLabel.textContent = data.yearFortune.label;
-    fortuneCenter.textContent = '今年の年盤の中心：' + data.yearFortune.yearCenterName;
-    fortuneText.textContent = data.yearFortune.text;
+    periodTabs.forEach(function(t){ t.classList.remove('active'); });
+    periodTabs[0].classList.add('active');
+    currentPeriod = 'year';
+    renderPeriod('year');
 
     showScreen(screenResult);
   }
